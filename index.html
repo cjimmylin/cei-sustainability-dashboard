@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ecological Sustainability &amp; Data Centers — Dashboard</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="data.js"></script>
+<style>
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-card: #1c2128;
+  --border: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --accent: #58a6ff;
+  --accent2: #3fb950;
+  --accent3: #f0883e;
+  --danger: #f85149;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  margin: 0;
+  min-height: 100vh;
+}
+.navbar {
+  background: var(--bg-secondary) !important;
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+}
+.navbar-brand {
+  color: var(--text-primary) !important;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.nav-tabs {
+  border-bottom: 1px solid var(--border);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.nav-tabs .nav-link {
+  color: var(--text-secondary);
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+.nav-tabs .nav-link:hover { color: var(--text-primary); border-bottom-color: var(--text-secondary); }
+.nav-tabs .nav-link.active { color: var(--accent); background: transparent; border-bottom: 2px solid var(--accent); }
+.tab-content { padding: 1.2rem; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+.card {
+  background: #1c2128;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+.card-header {
+  background: transparent;
+  border-bottom: 1px solid #30363d;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.7rem 1rem;
+  color: var(--text-primary);
+}
+.card-body { padding: 1rem; }
+.stat-card {
+  background: #1c2128;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+.stat-card .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); }
+.stat-card .stat-label { font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.3rem; }
+.chart-container { width: 100%; min-height: 400px; }
+.chart-container-sm { width: 100%; min-height: 300px; }
+table.data-table { width: 100%; font-size: 0.8rem; border-collapse: collapse; }
+table.data-table th {
+  background: #161b22;
+  color: var(--text-secondary);
+  font-weight: 600;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid #30363d;
+  text-align: left;
+  position: sticky;
+  top: 0;
+}
+table.data-table td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #21262d;
+  color: var(--text-primary);
+}
+table.data-table tr:hover td { background: rgba(88, 166, 255, 0.05); }
+.badge-tier-A { background: #3fb950; color: #000; }
+.badge-tier-B { background: #58a6ff; color: #000; }
+.badge-tier-C { background: #f0883e; color: #000; }
+.badge-tier-D { background: #8b949e; color: #fff; }
+.badge-tier-zero { background: #30363d; color: #8b949e; }
+.annotation {
+  background: rgba(88,166,255,0.08);
+  border-left: 3px solid var(--accent);
+  padding: 0.7rem 1rem;
+  margin: 0.8rem 0;
+  font-size: 0.82rem;
+  border-radius: 0 6px 6px 0;
+}
+.provenance {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 2rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #21262d;
+}
+.thread-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  margin: 0.1rem;
+}
+@media (max-width: 768px) {
+  .stat-card .stat-value { font-size: 1.5rem; }
+  .chart-container { min-height: 300px; }
+}
+@media print {
+  body { background: #fff; color: #000; }
+  .card { border-color: #ddd; background: #fff; }
+  .navbar { display: none; }
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="navbar-brand">Ecological Sustainability &amp; Data Centers — Tapestry Analysis</span>
+</nav>
+
+<div class="container-fluid px-3">
+  <ul class="nav nav-tabs mt-2" id="mainTabs">
+    <li class="nav-item"><a class="nav-link active" data-tab="tab-overview">Overview</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="tab-threads">Thread Analysis</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="tab-heatmap">Org × Thread</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="tab-top">Top Statements</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="tab-timeline">Timeline</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="tab-greenwash">Greenwash</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="tab-extra">Underrepresented</a></li>
+    <li class="nav-item"><a class="nav-link" data-tab="tab-methods">Methods</a></li>
+  </ul>
+
+  <div class="tab-content mt-1">
+
+    <!-- TAB 1: Overview -->
+    <div class="tab-pane active" id="tab-overview">
+      <div class="row g-3 mt-1">
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-value" id="ov-total"></div><div class="stat-label">Statements Scored</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-value" id="ov-nonzero"></div><div class="stat-label">With Relevance</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-value" style="color:#3fb950" id="ov-tiera"></div><div class="stat-label">Tier A (score &ge; 50)</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-value" style="color:#f0883e" id="ov-mean"></div><div class="stat-label">Mean Score</div></div></div>
+      </div>
+
+      <div class="annotation mt-3">
+        <strong>Key finding:</strong> Civil society organizations dominate the top tier of sustainability engagement,
+        with environmental NGOs (Greenpeace, Sierra Club, NAACP, Stand.earth) providing the most substantive
+        data center sustainability analysis. Government and intergovernmental statements mention sustainability
+        broadly but rarely address data-center-specific impacts in depth.
+      </div>
+
+      <div class="row g-3 mt-2">
+        <div class="col-md-6">
+          <div class="card"><div class="card-header">Tier Distribution</div><div class="card-body"><div id="chart-tier" class="chart-container-sm"></div></div></div>
+        </div>
+        <div class="col-md-6">
+          <div class="card"><div class="card-header">Organization Type Coverage</div><div class="card-body"><div id="chart-orgtype" class="chart-container-sm"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Thread Analysis -->
+    <div class="tab-pane" id="tab-threads">
+      <div class="card mt-2"><div class="card-header">Thread Comparison — 6 Research Threads</div><div class="card-body"><div id="chart-threads" class="chart-container"></div></div></div>
+
+      <div class="annotation">
+        <strong>Policy</strong> is the most frequently addressed thread (205 statements mention it),
+        but often only superficially. <strong>Water</strong> is the rarest (30 statements, only 7 scoring &ge; 50),
+        confirming the council's assessment that water impacts are a critical blind spot in AI governance.
+        <strong>Nuclear</strong> has 40 mentions but zero high-scoring — no statement substantively addresses
+        the nuclear-AI nexus.
+      </div>
+
+      <div class="card"><div class="card-header">Thread Co-occurrence (Tier A+B Statements)</div><div class="card-body"><div id="chart-cooccur" class="chart-container"></div></div></div>
+    </div>
+
+    <!-- TAB 3: Org × Thread Heatmap -->
+    <div class="tab-pane" id="tab-heatmap">
+      <div class="card mt-2"><div class="card-header">Mean Thread Score by Organization Type</div><div class="card-body"><div id="chart-heatmap" class="chart-container" style="min-height:500px;"></div></div></div>
+
+      <div class="annotation">
+        Civil society shows the strongest engagement across energy, climate, and policy threads.
+        Religious organizations show unexpected strength in ethics/religious framing but limited
+        engagement with technical threads. Industry statements score moderate on energy but low on
+        water and nuclear, suggesting selective disclosure.
+      </div>
+    </div>
+
+    <!-- TAB 4: Top Statements -->
+    <div class="tab-pane" id="tab-top">
+      <div class="card mt-2">
+        <div class="card-header">Top-Scoring Statements</div>
+        <div class="card-body" style="max-height:600px;overflow-y:auto;">
+          <table class="data-table" id="table-top">
+            <thead><tr><th>#</th><th>Key</th><th>Organization</th><th>Year</th><th>Score</th><th>Tier</th><th>Threads</th><th>GW Risk</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: Timeline -->
+    <div class="tab-pane" id="tab-timeline">
+      <div class="card mt-2"><div class="card-header">Sustainability Mentions Over Time</div><div class="card-body"><div id="chart-timeline" class="chart-container"></div></div></div>
+
+      <div class="annotation">
+        Sustainability engagement accelerates sharply from 2023 onward, coinciding with the
+        generative AI boom and growing public concern about data center expansion. The 2024-2025
+        spike reflects a wave of civil society advocacy and EU regulatory attention.
+      </div>
+    </div>
+
+    <!-- TAB 6: Greenwash Analysis -->
+    <div class="tab-pane" id="tab-greenwash">
+      <div class="card mt-2"><div class="card-header">Greenwash Risk by Organization Type</div><div class="card-body"><div id="chart-greenwash" class="chart-container-sm"></div></div></div>
+
+      <div class="card"><div class="card-header">Highest Greenwash Risk Statements</div>
+        <div class="card-body" style="max-height:400px;overflow-y:auto;">
+          <table class="data-table" id="table-greenwash">
+            <thead><tr><th>Key</th><th>Organization</th><th>Type</th><th>GW Risk</th><th>Actionability</th><th>Overall</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="annotation">
+        Greenwash risk scoring identifies statements that make sustainability claims without
+        concrete commitments, measurable targets, or accountability mechanisms. High greenwash
+        risk paired with low actionability suggests performative rather than substantive engagement.
+      </div>
+    </div>
+
+    <!-- TAB 7: Underrepresented Dimensions -->
+    <div class="tab-pane" id="tab-extra">
+      <div class="card mt-2"><div class="card-header">Underrepresented Dimensions Coverage</div><div class="card-body"><div id="chart-extra" class="chart-container-sm"></div></div></div>
+
+      <div class="annotation">
+        <strong>Critical gap:</strong> Gendered labor (13 statements), disability (20), and informal economy (12)
+        are almost entirely absent from AI governance sustainability discourse. Environmental justice
+        fares better (66 statements) but remains concentrated in US civil society organizations.
+        These gaps point to a need for external source acquisition beyond the Tapestry.
+      </div>
+
+      <div class="row g-3" id="extra-dim-cards"></div>
+    </div>
+
+    <!-- TAB 8: Methods -->
+    <div class="tab-pane" id="tab-methods">
+      <div class="card mt-2">
+        <div class="card-header">Methodology</div>
+        <div class="card-body" style="font-size:0.85rem;">
+          <h6 style="color:var(--accent)">Hybrid Keyword + LLM Scoring Pipeline</h6>
+          <p><strong>Phase 1 — Keyword Pre-Filter:</strong> 2,820 text extracts scanned against 6-thread keyword architecture.
+          Scoring: strong (×15) + medium (×5) − false-positive context (×10) + title bonus (20), clamped [0,100].
+          Co-occurrence boosting upgrades medium→strong when contextually validated.</p>
+
+          <p><strong>Phase 2 — LLM Deep Read:</strong> 351 candidates (keyword score ≥ 10) sent to Claude for contextual analysis.
+          LLM scores 6 threads + 5 additional dimensions (justice, ethics/religious, gendered labor, disability, informal economy)
+          plus greenwash risk (0-100) and actionability (0-100). LLM scores override keywords where they differ.</p>
+
+          <h6 style="color:var(--accent)" class="mt-3">Expert Council</h6>
+          <p>16-member council: 12 domain experts (climate, water, energy, nuclear, policy, economics, justice,
+          measurement, corporate sustainability, AI systems, infrastructure, toxicology) + 4 ethics/religious
+          voices (environmental ethics, Abrahamic traditions, Eastern/Indigenous traditions, theology & technology).</p>
+
+          <h6 style="color:var(--accent)" class="mt-3">Source Corpus</h6>
+          <p>Tapestry — The Global AI Principles & Governance Database (Lin, 2026). ~3,044 statements from
+          ~3,460 organizations across all sectors and regions. Text extracts available for ~2,820 statements.</p>
+
+          <div class="provenance">
+            Generated: 2026-04-10 | Pipeline: hybrid_sustainability_scorer.py (Phase 1+2) → consolidate_llm_results.py → generate_dashboard.py<br>
+            Data: CEI-AI-Statements/SUSTAINABILITY/ | Council: 16-member (see METHODS/20260410-council-composition.md)
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// === Tab Navigation ===
+document.querySelectorAll('.nav-link[data-tab]').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelectorAll('.nav-link[data-tab]').forEach(l => l.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    link.classList.add('active');
+    document.getElementById(link.dataset.tab).classList.add('active');
+    // Resize charts in new tab
+    setTimeout(() => {
+      document.querySelectorAll('.tab-pane.active [id^="chart-"]').forEach(el => {
+        const inst = echarts.getInstanceByDom(el);
+        if (inst) inst.resize();
+      });
+    }, 50);
+  });
+});
+
+// Hash routing
+function activateHash() {
+  const hash = location.hash.replace('#','');
+  if (hash) {
+    const link = document.querySelector('.nav-link[data-tab="tab-' + hash + '"]');
+    if (link) link.click();
+  }
+}
+document.querySelectorAll('.nav-link[data-tab]').forEach(l => {
+  l.addEventListener('click', () => { location.hash = l.dataset.tab.replace('tab-',''); });
+});
+window.addEventListener('hashchange', activateHash);
+
+// === Populate Overview ===
+document.getElementById('ov-total').textContent = OVERVIEW.total_scored;
+document.getElementById('ov-nonzero').textContent = OVERVIEW.total_nonzero;
+document.getElementById('ov-tiera').textContent = OVERVIEW.total_tier_a;
+document.getElementById('ov-mean').textContent = OVERVIEW.score_mean;
+
+// === Chart: Tier Distribution (donut) ===
+const tierChart = echarts.init(document.getElementById('chart-tier'));
+const tierColors = { A: '#3fb950', B: '#58a6ff', C: '#f0883e', D: '#8b949e', zero: '#30363d' };
+tierChart.setOption({
+  tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+  series: [{
+    type: 'pie', radius: ['40%', '70%'],
+    label: { color: '#e6edf3', fontSize: 12 },
+    data: Object.entries(OVERVIEW.tier_counts).map(([k,v]) => ({
+      name: 'Tier ' + k, value: v, itemStyle: { color: tierColors[k] || '#666' }
+    }))
+  }]
+});
+
+// === Chart: Org Type Bar ===
+const orgChart = echarts.init(document.getElementById('chart-orgtype'));
+const orgEntries = Object.entries(OVERVIEW.org_type_distribution).sort((a,b) => b[1]-a[1]);
+orgChart.setOption({
+  tooltip: { trigger: 'axis' },
+  grid: { left: '30%', right: '5%', top: '5%', bottom: '5%' },
+  xAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+  yAxis: { type: 'category', data: orgEntries.map(e => e[0]).reverse(), axisLabel: { color: '#e6edf3', fontSize: 11 } },
+  series: [{
+    type: 'bar',
+    data: orgEntries.map(e => ({ value: e[1], itemStyle: { color: ORG_TYPE_COLORS[e[0]] || '#666' } })).reverse(),
+    barMaxWidth: 20
+  }]
+});
+
+// === Chart: Thread Comparison ===
+const threadChart = echarts.init(document.getElementById('chart-threads'));
+const threadEntries = Object.entries(THREAD_OVERVIEW);
+threadChart.setOption({
+  tooltip: { trigger: 'axis' },
+  legend: { data: ['Non-zero count', 'High (>=50)'], textStyle: { color: '#e6edf3' }, top: 0 },
+  grid: { left: '15%', right: '5%', top: '12%', bottom: '10%' },
+  xAxis: { type: 'category', data: threadEntries.map(e => e[1].label), axisLabel: { color: '#e6edf3' } },
+  yAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+  series: [
+    {
+      name: 'Non-zero count', type: 'bar', barGap: '10%',
+      data: threadEntries.map(e => ({ value: e[1].count_nonzero, itemStyle: { color: e[1].color } }))
+    },
+    {
+      name: 'High (>=50)', type: 'bar',
+      data: threadEntries.map(e => ({ value: e[1].count_high, itemStyle: { color: e[1].color, opacity: 0.5 } }))
+    }
+  ]
+});
+
+// === Chart: Co-occurrence ===
+const coChart = echarts.init(document.getElementById('chart-cooccur'));
+const coLabels = Object.values(THREAD_OVERVIEW).map(t => t.label);
+const coData = [];
+Object.entries(CO_OCCURRENCE).forEach(([key, val]) => {
+  const parts = key.split('|');
+  const xi = coLabels.indexOf(parts[0]);
+  const yi = coLabels.indexOf(parts[1]);
+  if (xi >= 0 && yi >= 0) {
+    coData.push([xi, yi, val]);
+    if (xi !== yi) coData.push([yi, xi, val]);
+  }
+});
+coChart.setOption({
+  tooltip: { formatter: p => p.data ? coLabels[p.data[0]] + ' × ' + coLabels[p.data[1]] + ': ' + p.data[2] : '' },
+  grid: { left: '18%', right: '12%', top: '5%', bottom: '15%' },
+  xAxis: { type: 'category', data: coLabels, axisLabel: { color: '#e6edf3', rotate: 30 } },
+  yAxis: { type: 'category', data: coLabels, axisLabel: { color: '#e6edf3' } },
+  visualMap: { min: 0, max: Math.max(...coData.map(d => d[2])), inRange: { color: ['#161b22', '#3fb950'] }, textStyle: { color: '#8b949e' }, right: 0 },
+  series: [{
+    type: 'heatmap', data: coData,
+    label: { show: true, color: '#e6edf3', fontSize: 11 },
+    itemStyle: { borderColor: '#0d1117', borderWidth: 2 }
+  }]
+});
+
+// === Chart: Org × Thread Heatmap ===
+const hmChart = echarts.init(document.getElementById('chart-heatmap'));
+hmChart.setOption({
+  tooltip: { formatter: p => p.data ? HEATMAP.x_labels[p.data[0]] + ' × ' + HEATMAP.y_labels[p.data[1]] + ': ' + p.data[2] : '' },
+  grid: { left: '22%', right: '12%', top: '5%', bottom: '12%' },
+  xAxis: { type: 'category', data: HEATMAP.x_labels, axisLabel: { color: '#e6edf3' } },
+  yAxis: { type: 'category', data: HEATMAP.y_labels, axisLabel: { color: '#e6edf3', fontSize: 11 } },
+  visualMap: { min: 0, max: Math.max(...HEATMAP.data.map(d => d[2])), inRange: { color: ['#161b22', '#58a6ff'] }, textStyle: { color: '#8b949e' }, right: 0 },
+  series: [{
+    type: 'heatmap', data: HEATMAP.data,
+    label: { show: true, color: '#e6edf3', fontSize: 10 },
+    itemStyle: { borderColor: '#0d1117', borderWidth: 2 }
+  }]
+});
+
+// === Table: Top Statements ===
+const topTbody = document.querySelector('#table-top tbody');
+TOP_STATEMENTS.forEach((r, i) => {
+  const threadBadges = Object.entries(r.threads).map(([t,s]) =>
+    '<span class="thread-badge" style="background:rgba(88,166,255,0.15);color:#79c0ff">' + t + '=' + s + '</span>'
+  ).join(' ');
+  const tierClass = 'badge-tier-' + r.tier;
+  topTbody.innerHTML += '<tr>' +
+    '<td>' + (i+1) + '</td>' +
+    '<td style="font-family:JetBrains Mono;font-size:0.75rem">' + r.key + '</td>' +
+    '<td>' + r.org + '</td>' +
+    '<td>' + r.year + '</td>' +
+    '<td style="font-weight:700">' + r.overall + '</td>' +
+    '<td><span class="badge ' + tierClass + '">' + r.tier + '</span></td>' +
+    '<td>' + threadBadges + '</td>' +
+    '<td>' + (r.greenwash > 0 ? r.greenwash : '-') + '</td>' +
+    '</tr>';
+});
+
+// === Chart: Timeline ===
+const tlChart = echarts.init(document.getElementById('chart-timeline'));
+const tlYears = Object.keys(YEAR_TIMELINE).map(Number).sort();
+tlChart.setOption({
+  tooltip: { trigger: 'axis' },
+  legend: { data: ['Count', 'Tier A'], textStyle: { color: '#e6edf3' }, top: 0 },
+  grid: { left: '10%', right: '10%', top: '12%', bottom: '10%' },
+  xAxis: { type: 'category', data: tlYears, axisLabel: { color: '#e6edf3' } },
+  yAxis: [
+    { type: 'value', name: 'Count', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+    { type: 'value', name: 'Tier A', axisLabel: { color: '#8b949e' }, splitLine: { show: false } }
+  ],
+  series: [
+    {
+      name: 'Count', type: 'bar', yAxisIndex: 0,
+      data: tlYears.map(y => ({ value: YEAR_TIMELINE[y].count, itemStyle: { color: '#58a6ff' } })),
+      barMaxWidth: 30
+    },
+    {
+      name: 'Tier A', type: 'line', yAxisIndex: 1,
+      data: tlYears.map(y => YEAR_TIMELINE[y].tier_a),
+      lineStyle: { color: '#3fb950', width: 2 },
+      itemStyle: { color: '#3fb950' }
+    }
+  ]
+});
+
+// === Chart: Greenwash by org type ===
+const gwChart = echarts.init(document.getElementById('chart-greenwash'));
+const gwEntries = Object.entries(GREENWASH.type_means).sort((a,b) => b[1]-a[1]);
+gwChart.setOption({
+  tooltip: { trigger: 'axis' },
+  grid: { left: '30%', right: '5%', top: '5%', bottom: '5%' },
+  xAxis: { type: 'value', name: 'Mean GW Risk', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+  yAxis: { type: 'category', data: gwEntries.map(e => e[0]).reverse(), axisLabel: { color: '#e6edf3', fontSize: 11 } },
+  series: [{
+    type: 'bar',
+    data: gwEntries.map(e => {
+      const c = e[1] >= 20 ? '#f85149' : e[1] >= 10 ? '#f0883e' : '#3fb950';
+      return { value: e[1], itemStyle: { color: c } };
+    }).reverse(),
+    barMaxWidth: 20
+  }]
+});
+
+// Greenwash table
+const gwTbody = document.querySelector('#table-greenwash tbody');
+GREENWASH.top_flagged.forEach(r => {
+  gwTbody.innerHTML += '<tr>' +
+    '<td style="font-family:JetBrains Mono;font-size:0.75rem">' + r.key + '</td>' +
+    '<td>' + r.org + '</td>' +
+    '<td>' + r.org_type + '</td>' +
+    '<td style="color:#f85149;font-weight:700">' + r.greenwash_risk + '</td>' +
+    '<td>' + r.actionability + '</td>' +
+    '<td>' + r.overall + '</td>' +
+    '</tr>';
+});
+
+// === Chart: Extra Dimensions ===
+const extraChart = echarts.init(document.getElementById('chart-extra'));
+const exEntries = Object.entries(EXTRA_DIMENSIONS);
+extraChart.setOption({
+  tooltip: { trigger: 'axis' },
+  grid: { left: '25%', right: '5%', top: '5%', bottom: '5%' },
+  xAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+  yAxis: { type: 'category', data: exEntries.map(e => e[1].label).reverse(), axisLabel: { color: '#e6edf3' } },
+  series: [{
+    type: 'bar',
+    data: exEntries.map(e => ({
+      value: e[1].count,
+      itemStyle: { color: e[1].count < 20 ? '#f85149' : '#58a6ff' }
+    })).reverse(),
+    barMaxWidth: 25,
+    label: { show: true, position: 'right', color: '#e6edf3', fontSize: 11 }
+  }]
+});
+
+// Extra dimension detail cards
+const extraCards = document.getElementById('extra-dim-cards');
+exEntries.forEach(([field, dim]) => {
+  if (dim.top.length === 0) return;
+  let rows = dim.top.map(r =>
+    '<tr><td style="font-family:JetBrains Mono;font-size:0.72rem">' + r.key + '</td><td>' + r.org + '</td><td>' + r.score + '</td></tr>'
+  ).join('');
+  extraCards.innerHTML += '<div class="col-md-6"><div class="card"><div class="card-header">' + dim.label +
+    ' (' + dim.count + ' statements)</div><div class="card-body" style="max-height:250px;overflow-y:auto">' +
+    '<table class="data-table"><thead><tr><th>Key</th><th>Org</th><th>Score</th></tr></thead><tbody>' +
+    rows + '</tbody></table></div></div></div>';
+});
+
+// Resize handler
+window.addEventListener('resize', () => {
+  document.querySelectorAll('[id^="chart-"]').forEach(el => {
+    const inst = echarts.getInstanceByDom(el);
+    if (inst) inst.resize();
+  });
+});
+
+// Activate hash on load
+activateHash();
+</script>
+
+</body>
+</html>
