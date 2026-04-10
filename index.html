@@ -131,6 +131,59 @@ table.data-table tr:hover td { background: rgba(88, 166, 255, 0.05); }
   font-weight: 500;
   margin: 0.1rem;
 }
+.literature-context {
+  background: rgba(240,136,62,0.08);
+  border-left: 3px solid var(--accent3);
+  padding: 0.7rem 1rem;
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
+  border-radius: 0 6px 6px 0;
+}
+.literature-context .ext-badge {
+  display: inline-block;
+  background: var(--accent3);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+.geo-card {
+  background: #1c2128;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 1rem;
+}
+.geo-card .geo-headline {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent3);
+  margin-bottom: 0.4rem;
+}
+.geo-card .geo-stat {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--danger);
+}
+.geo-card .geo-stat-label {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+.geo-fact-list {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  padding-left: 1.2rem;
+  margin: 0.4rem 0;
+}
+.geo-fact-list li { margin-bottom: 0.2rem; }
+.geo-source-ref {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 0.3rem;
+}
 @media (max-width: 768px) {
   .stat-card .stat-value { font-size: 1.5rem; }
   .chart-container { min-height: 300px; }
@@ -263,14 +316,28 @@ table.data-table tr:hover td { background: rgba(88, 166, 255, 0.05); }
     <div class="tab-pane" id="tab-extra">
       <div class="card mt-2"><div class="card-header">Underrepresented Dimensions Coverage</div><div class="card-body"><div id="chart-extra" class="chart-container-sm"></div></div></div>
 
-      <div class="annotation">
-        <strong>Critical gap:</strong> Gendered labor (13 statements), disability (20), and informal economy (12)
-        are almost entirely absent from AI governance sustainability discourse. Environmental justice
-        fares better (66 statements) but remains concentrated in US civil society organizations.
+      <div class="annotation" id="critical-gap-annotation">
+        <strong>Critical gap:</strong> <span id="critical-gap-text"></span>
         These gaps point to a need for external source acquisition beyond the Tapestry.
       </div>
 
+      <!-- Geographic Coverage Section -->
+      <div class="card mt-3">
+        <div class="card-header">Geographic Coverage — Governance vs. Reality Gap</div>
+        <div class="card-body">
+          <div class="annotation" style="margin-top:0;">
+            <strong>Finding:</strong> Three regions face acute data center sustainability challenges but have
+            &lt;20% of their AI governance statements addressing sustainability — a stark governance-reality gap.
+          </div>
+          <div class="row g-3 mt-2" id="geo-region-cards"></div>
+          <div id="chart-geo-gap" class="chart-container-sm mt-3"></div>
+        </div>
+      </div>
+
       <div class="row g-3" id="extra-dim-cards"></div>
+
+      <!-- Literature Context Container -->
+      <div id="literature-context-container"></div>
     </div>
 
     <!-- TAB 8: Methods -->
@@ -295,6 +362,12 @@ table.data-table tr:hover td { background: rgba(88, 166, 255, 0.05); }
           <h6 style="color:var(--accent)" class="mt-3">Source Corpus</h6>
           <p>Tapestry — The Global AI Principles & Governance Database (Lin, 2026). ~3,044 statements from
           ~3,460 organizations across all sectors and regions. Text extracts available for ~2,820 statements.</p>
+
+          <h6 style="color:var(--accent)" class="mt-3">Known Data Issues</h6>
+          <ul style="font-size:0.82rem;color:#8b949e;">
+            <li><strong>STMT-3016:</strong> Permanently unscoreable — text extract is only 14 characters. Excluded from analysis. Manual document re-acquisition required.</li>
+            <li><strong>STMT-2663</strong> (UNEP AI Environmental Impact): Corrupted binary extract. Title suggests genuine relevance but extract is unusable. Flagged for manual re-extraction.</li>
+          </ul>
 
           <div class="provenance">
             Generated: 2026-04-10 | Pipeline: hybrid_sustainability_scorer.py (Phase 1+2) → consolidate_llm_results.py → generate_dashboard.py<br>
@@ -532,6 +605,18 @@ extraChart.setOption({
   }]
 });
 
+// Dynamic critical gap annotation (replaces hardcoded S3 counts)
+const gapEl = document.getElementById('critical-gap-text');
+if (gapEl) {
+  const gl = EXTRA_DIMENSIONS.sust_gendered_labor ? EXTRA_DIMENSIONS.sust_gendered_labor.count : 0;
+  const di = EXTRA_DIMENSIONS.sust_disability ? EXTRA_DIMENSIONS.sust_disability.count : 0;
+  const ie = EXTRA_DIMENSIONS.sust_informal_economy ? EXTRA_DIMENSIONS.sust_informal_economy.count : 0;
+  const ej = EXTRA_DIMENSIONS.sust_justice ? EXTRA_DIMENSIONS.sust_justice.count : 0;
+  gapEl.textContent = 'Gendered labor (' + gl + ' statements), disability (' + di +
+    '), and informal economy (' + ie + ') are almost entirely absent from AI governance sustainability discourse. ' +
+    'Environmental justice fares better (' + ej + ' statements) but remains concentrated in civil society organizations.';
+}
+
 // Extra dimension detail cards
 const extraCards = document.getElementById('extra-dim-cards');
 exEntries.forEach(([field, dim]) => {
@@ -544,6 +629,196 @@ exEntries.forEach(([field, dim]) => {
     '<table class="data-table"><thead><tr><th>Key</th><th>Org</th><th>Score</th></tr></thead><tbody>' +
     rows + '</tbody></table></div></div></div>';
 });
+
+// === Literature Context (Background Sources) ===
+if (typeof BACKGROUND_SOURCES !== 'undefined') {
+  const litContainer = document.getElementById('literature-context-container');
+  if (litContainer) {
+    const underrepDims = ['sust_gendered_labor', 'sust_disability', 'sust_informal_economy', 'sust_justice', 'sust_ethics_religious'];
+    const dimLabels = {
+      'sust_gendered_labor': 'Gendered Labor',
+      'sust_disability': 'Disability',
+      'sust_informal_economy': 'Informal Economy',
+      'sust_justice': 'Environmental Justice',
+      'sust_ethics_religious': 'Ethics / Religious'
+    };
+
+    const card = document.createElement('div');
+    card.className = 'card mt-3';
+
+    const header = document.createElement('div');
+    header.className = 'card-header';
+    header.textContent = 'Literature Context — External Sources';
+    card.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'card-body';
+
+    const methodNote = document.createElement('div');
+    methodNote.className = 'annotation';
+    methodNote.style.marginTop = '0';
+    methodNote.style.marginBottom = '1rem';
+    const noteStrong = document.createElement('strong');
+    noteStrong.textContent = 'Methodological note: ';
+    methodNote.appendChild(noteStrong);
+    methodNote.appendChild(document.createTextNode(
+      'These external academic and policy sources contextualize the corpus gaps identified above. ' +
+      'They are NOT scored through the LLM pipeline — they represent what the literature says governance statements are missing. ' +
+      'The contrast between corpus coverage and external evidence IS the analytical finding.'
+    ));
+    body.appendChild(methodNote);
+
+    underrepDims.forEach(dim => {
+      const sources = BACKGROUND_SOURCES[dim];
+      if (!sources || sources.length === 0) return;
+
+      const heading = document.createElement('h6');
+      heading.style.color = 'var(--accent3)';
+      heading.style.marginTop = '1rem';
+      heading.textContent = (dimLabels[dim] || dim) + ' (' + sources.length + ' sources)';
+      body.appendChild(heading);
+
+      sources.forEach(src => {
+        const ctx = document.createElement('div');
+        ctx.className = 'literature-context';
+
+        const badge = document.createElement('span');
+        badge.className = 'ext-badge';
+        badge.textContent = 'External Source';
+        ctx.appendChild(badge);
+
+        const authorSpan = document.createElement('strong');
+        authorSpan.textContent = src.authors + ' (' + src.year + ')';
+        ctx.appendChild(authorSpan);
+
+        if (src.tier === '1' || src.tier === 1) {
+          const tierBadge = document.createElement('span');
+          tierBadge.style.cssText = 'background:#3fb950;color:#000;font-size:0.6rem;padding:0.1rem 0.3rem;border-radius:2px;margin-left:0.3rem;';
+          tierBadge.textContent = 'TIER 1';
+          ctx.appendChild(tierBadge);
+        }
+
+        ctx.appendChild(document.createElement('br'));
+
+        const titleEm = document.createElement('em');
+        titleEm.textContent = '“' + src.title + '”';
+        ctx.appendChild(titleEm);
+
+        ctx.appendChild(document.createElement('br'));
+
+        const finding = document.createElement('span');
+        finding.style.color = '#8b949e';
+        finding.textContent = src.key_finding;
+        ctx.appendChild(finding);
+
+        body.appendChild(ctx);
+      });
+    });
+
+    card.appendChild(body);
+    litContainer.appendChild(card);
+  }
+}
+
+// === Geographic Coverage Section ===
+if (typeof GEOGRAPHIC_COVERAGE !== 'undefined') {
+  const geoCards = document.getElementById('geo-region-cards');
+  const regionColors = { 'CEE': '#d2a8ff', 'SE_Asia': '#f0883e', 'MENA': '#58a6ff' };
+  const regionLabels = { 'CEE': 'Central & Eastern Europe', 'SE_Asia': 'Southeast Asia', 'MENA': 'Middle East & North Africa' };
+
+  Object.entries(GEOGRAPHIC_COVERAGE).forEach(([key, region]) => {
+    const pct = region.coverage_pct;
+    const color = regionColors[key] || '#8b949e';
+    let noteHtml = '';
+    if (region.singapore_note) noteHtml = '<div style="font-size:0.7rem;color:#8b949e;margin-top:0.3rem;">' + region.singapore_note + '</div>';
+    if (region.classification_note) noteHtml = '<div style="font-size:0.7rem;color:#8b949e;margin-top:0.3rem;">' + region.classification_note + '</div>';
+
+    // Reality facts
+    const r = region.reality || {};
+    let factsHtml = '';
+    if (r.facts) {
+      factsHtml = '<ul class="geo-fact-list">' + r.facts.map(f => '<li>' + f + '</li>').join('') + '</ul>';
+      if (r.source_refs) factsHtml += '<div class="geo-source-ref">Sources: ' + r.source_refs.join(', ') + '</div>';
+    }
+
+    // Top countries
+    const countries = region.countries || {};
+    const topCountries = Object.entries(countries).slice(0, 5);
+    let countryHtml = '<div style="font-size:0.75rem;margin-top:0.5rem;color:#8b949e"><strong>Top countries:</strong> ' +
+      topCountries.map(([c, n]) => c + ' (' + n + ')').join(', ') + '</div>';
+
+    geoCards.innerHTML += '<div class="col-md-4"><div class="geo-card">' +
+      '<div class="geo-headline">' + (regionLabels[key] || key) + '</div>' +
+      '<div class="geo-stat">' + pct + '%</div>' +
+      '<div class="geo-stat-label">of ' + region.total_statements + ' statements address sustainability (' + region.scored_nonzero + ' nonzero)</div>' +
+      noteHtml +
+      '<div style="margin-top:0.6rem;border-top:1px solid #30363d;padding-top:0.5rem;">' +
+      '<div style="font-size:0.78rem;font-weight:600;color:' + color + '">Reality: ' + (r.headline || '') + '</div>' +
+      factsHtml +
+      '</div>' +
+      countryHtml +
+      '</div></div>';
+  });
+
+  // Gap visualization chart
+  const geoGapChart = echarts.init(document.getElementById('chart-geo-gap'));
+  const geoKeys = Object.keys(GEOGRAPHIC_COVERAGE);
+  const geoData = geoKeys.map(k => {
+    const reg = GEOGRAPHIC_COVERAGE[k];
+    return {
+      name: (regionLabels[k] || k),
+      governance: reg.coverage_pct,
+      total: reg.total_statements,
+      scored: reg.scored_nonzero
+    };
+  });
+
+  geoGapChart.setOption({
+    tooltip: {
+      trigger: 'axis',
+      formatter: function(params) {
+        const d = geoData[params[0].dataIndex];
+        return d.name + '<br/>Governance coverage: ' + d.governance + '%<br/>' +
+          d.scored + ' of ' + d.total + ' statements address sustainability';
+      }
+    },
+    grid: { left: '30%', right: '10%', top: '8%', bottom: '12%' },
+    xAxis: {
+      type: 'value',
+      max: 100,
+      name: 'Coverage %',
+      nameTextStyle: { color: '#8b949e', fontSize: 10 },
+      axisLabel: { color: '#8b949e', formatter: '{value}%' },
+      splitLine: { lineStyle: { color: '#21262d' } }
+    },
+    yAxis: {
+      type: 'category',
+      data: geoData.map(d => d.name),
+      axisLabel: { color: '#e6edf3', fontSize: 12 }
+    },
+    series: [{
+      type: 'bar',
+      data: geoData.map((d, i) => ({
+        value: d.governance,
+        itemStyle: { color: Object.values(regionColors)[i] || '#58a6ff' }
+      })),
+      barMaxWidth: 30,
+      label: {
+        show: true,
+        position: 'right',
+        color: '#e6edf3',
+        fontSize: 11,
+        formatter: '{c}%'
+      },
+      markLine: {
+        silent: true,
+        symbol: 'none',
+        lineStyle: { color: '#f85149', type: 'dashed', width: 1 },
+        data: [{ xAxis: 50, label: { show: true, formatter: 'Adequate', color: '#f85149', fontSize: 10 } }]
+      }
+    }]
+  });
+}
 
 // Resize handler
 window.addEventListener('resize', () => {
