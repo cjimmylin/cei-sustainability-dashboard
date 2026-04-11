@@ -15,6 +15,107 @@ if (typeof OVERVIEW === 'undefined') {
 // === Accessibility: reduced motion ===
 const REDUCE_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// === Theme Toggle ===
+var themeVersion = 0;
+var tabThemeVersion = {};
+
+function isDark() {
+  return document.documentElement.getAttribute('data-theme') !== 'light';
+}
+
+function getThemeColors() {
+  var dark = isDark();
+  return {
+    textPrimary: dark ? '#e6edf3' : '#1f2328',
+    textSecondary: dark ? '#8b949e' : '#656d76',
+    splitLine: dark ? '#21262d' : '#e1e4e8',
+    bgLow: dark ? '#161b22' : '#f6f8fa',
+    borderColor: dark ? '#0d1117' : '#ffffff',
+    borderSubtle: dark ? '#30363d' : '#d0d7de'
+  };
+}
+
+(function initTheme() {
+  var saved = localStorage.getItem('sust-dashboard-theme');
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+  var btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.textContent = isDark() ? 'Light' : 'Dark';
+    btn.addEventListener('click', function() {
+      var nowLight = isDark();
+      document.documentElement.setAttribute('data-theme', nowLight ? 'light' : '');
+      if (nowLight) {
+        localStorage.setItem('sust-dashboard-theme', 'light');
+      } else {
+        localStorage.removeItem('sust-dashboard-theme');
+      }
+      btn.textContent = isDark() ? 'Light' : 'Dark';
+      themeVersion++;
+      updateAllChartsTheme();
+    });
+  }
+})();
+
+function updateAllChartsTheme() {
+  var tc = getThemeColors();
+  var allCharts = document.querySelectorAll('[id^="chart-"]');
+  allCharts.forEach(function(el) {
+    var inst = echarts.getInstanceByDom(el);
+    if (!inst || inst.isDisposed()) return;
+    var opt = inst.getOption();
+    var patch = {};
+    // Update axes
+    if (opt.xAxis) {
+      patch.xAxis = opt.xAxis.map(function(ax) {
+        var p = { axisLabel: { color: ax.type === 'category' ? tc.textPrimary : tc.textSecondary } };
+        if (ax.nameTextStyle) p.nameTextStyle = { color: tc.textSecondary };
+        if (ax.splitLine) p.splitLine = { lineStyle: { color: tc.splitLine } };
+        return p;
+      });
+    }
+    if (opt.yAxis) {
+      patch.yAxis = opt.yAxis.map(function(ax) {
+        var p = { axisLabel: { color: ax.type === 'category' ? tc.textPrimary : tc.textSecondary } };
+        if (ax.splitLine) p.splitLine = { lineStyle: { color: tc.splitLine } };
+        return p;
+      });
+    }
+    // Update legend
+    if (opt.legend && opt.legend.length) {
+      patch.legend = [{ textStyle: { color: tc.textPrimary } }];
+    }
+    // Update visualMap
+    if (opt.visualMap && opt.visualMap.length) {
+      patch.visualMap = opt.visualMap.map(function(vm) {
+        var p = { textStyle: { color: tc.textSecondary } };
+        if (vm.inRange && vm.inRange.color) {
+          p.inRange = { color: [tc.bgLow, vm.inRange.color[1]] };
+        }
+        return p;
+      });
+    }
+    // Update series labels
+    if (opt.series) {
+      patch.series = opt.series.map(function(s) {
+        var p = {};
+        if (s.label && s.label[0] && s.label[0].color) {
+          p.label = { color: tc.textPrimary };
+        }
+        if (s.itemStyle && s.itemStyle[0] && s.itemStyle[0].borderColor) {
+          p.itemStyle = { borderColor: tc.borderColor };
+        }
+        return p;
+      });
+    }
+    inst.setOption(patch);
+  });
+  // Track version for lazy tab re-render
+  var activeTab = document.querySelector('.tab-pane.active');
+  if (activeTab) tabThemeVersion[activeTab.id] = themeVersion;
+}
+
 // === Tab Navigation ===
 document.querySelectorAll('[role="tab"][data-tab]').forEach(link => {
   link.addEventListener('click', e => {
@@ -28,13 +129,19 @@ document.querySelectorAll('[role="tab"][data-tab]').forEach(link => {
     link.classList.add('active');
     link.setAttribute('aria-selected', 'true');
     link.setAttribute('tabindex', '0');
-    document.getElementById(link.dataset.tab).classList.add('active');
-    // Resize charts in new tab
+    var tabId = link.dataset.tab;
+    document.getElementById(tabId).classList.add('active');
+    // Resize charts in new tab + lazy theme re-render
     setTimeout(() => {
+      var needsThemeUpdate = (tabThemeVersion[tabId] || 0) < themeVersion;
       document.querySelectorAll('.tab-pane.active [id^="chart-"]').forEach(el => {
         const inst = echarts.getInstanceByDom(el);
         if (inst) inst.resize();
       });
+      if (needsThemeUpdate) {
+        updateAllChartsTheme();
+        tabThemeVersion[tabId] = themeVersion;
+      }
     }, 50);
   });
 });
@@ -392,7 +499,7 @@ if (typeof BACKGROUND_SOURCES !== 'undefined') {
         ctx.appendChild(document.createElement('br'));
 
         const finding = document.createElement('span');
-        finding.style.color = '#8b949e';
+        finding.style.color = 'var(--text-secondary)';
         finding.textContent = src.key_finding;
         ctx.appendChild(finding);
 
@@ -415,8 +522,8 @@ if (typeof GEOGRAPHIC_COVERAGE !== 'undefined') {
     const pct = region.coverage_pct;
     const color = regionColors[key] || '#8b949e';
     let noteHtml = '';
-    if (region.singapore_note) noteHtml = '<div style="font-size:0.7rem;color:#8b949e;margin-top:0.3rem;">' + escapeHtml(region.singapore_note) + '</div>';
-    if (region.classification_note) noteHtml = '<div style="font-size:0.7rem;color:#8b949e;margin-top:0.3rem;">' + escapeHtml(region.classification_note) + '</div>';
+    if (region.singapore_note) noteHtml = '<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:0.3rem;">' + escapeHtml(region.singapore_note) + '</div>';
+    if (region.classification_note) noteHtml = '<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:0.3rem;">' + escapeHtml(region.classification_note) + '</div>';
 
     // Reality facts
     const r = region.reality || {};
@@ -429,7 +536,7 @@ if (typeof GEOGRAPHIC_COVERAGE !== 'undefined') {
     // Top countries
     const countries = region.countries || {};
     const topCountries = Object.entries(countries).slice(0, 5);
-    let countryHtml = '<div style="font-size:0.75rem;margin-top:0.5rem;color:#8b949e"><strong>Top countries:</strong> ' +
+    let countryHtml = '<div style="font-size:0.75rem;margin-top:0.5rem;color:var(--text-secondary)"><strong>Top countries:</strong> ' +
       topCountries.map(([c, n]) => escapeHtml(c) + ' (' + n + ')').join(', ') + '</div>';
 
     geoCards.insertAdjacentHTML('beforeend', '<div class="col-md-4"><div class="geo-card">' +
@@ -437,7 +544,7 @@ if (typeof GEOGRAPHIC_COVERAGE !== 'undefined') {
       '<div class="geo-stat">' + pct + '%</div>' +
       '<div class="geo-stat-label">of ' + region.total_statements + ' statements address sustainability (' + region.scored_nonzero + ' nonzero)</div>' +
       noteHtml +
-      '<div style="margin-top:0.6rem;border-top:1px solid #30363d;padding-top:0.5rem;">' +
+      '<div style="margin-top:0.6rem;border-top:1px solid var(--border);padding-top:0.5rem;">' +
       '<div style="font-size:0.78rem;font-weight:600;color:' + color + '">Reality: ' + escapeHtml(r.headline || '') + '</div>' +
       factsHtml +
       '</div>' +
@@ -646,6 +753,9 @@ window.addEventListener('resize', () => {
 
 // Activate hash on load
 activateHash();
+
+// Apply theme to charts if loaded with light theme from localStorage
+if (!isDark()) updateAllChartsTheme();
 
 // Print preparation: open all <details> and show all tabs
 window.addEventListener('beforeprint', function() {
