@@ -184,14 +184,110 @@ table.data-table tr:hover td { background: rgba(88, 166, 255, 0.05); }
   font-style: italic;
   margin-top: 0.3rem;
 }
+/* === Responsive Breakpoints === */
+@media (max-width: 992px) {
+  .row.g-3 > [class*="col-md-3"] { flex: 0 0 33.333%; max-width: 33.333%; }
+  .chart-container, .chart-container-sm { min-height: 350px; }
+  table.data-table { font-size: 0.78rem; }
+}
 @media (max-width: 768px) {
   .stat-card .stat-value { font-size: 1.5rem; }
   .chart-container { min-height: 300px; }
 }
+@media (max-width: 576px) {
+  .row.g-3 > [class*="col-6"],
+  .row.g-3 > [class*="col-md-3"] { flex: 0 0 50%; max-width: 50%; }
+  .nav-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .nav-tabs .nav-link {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 0.7rem;
+    font-size: 0.78rem;
+  }
+  .card-body { padding: 0.7rem; }
+  .chart-container, .chart-container-sm { min-height: 250px; }
+  table.data-table { font-size: 0.75rem; }
+  .table-responsive-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+/* === Print Stylesheet === */
 @media print {
-  body { background: #fff; color: #000; }
-  .card { border-color: #ddd; background: #fff; }
-  .navbar { display: none; }
+  @page { margin: 1in; }
+  * { color-adjust: exact; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: #fff !important; color: #000 !important; font-size: 11pt; }
+  .navbar, .nav-tabs, .btn, [data-theme-toggle], button { display: none !important; }
+  .tab-pane { display: block !important; page-break-before: always; }
+  .tab-pane:first-child { page-break-before: auto; }
+  .card {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .card-header {
+    background: #f5f5f5 !important;
+    color: #000 !important;
+    border-bottom: 1px solid #ccc !important;
+  }
+  .card-body { color: #000 !important; }
+  .stat-card {
+    background: #f9f9f9 !important;
+    border: 1px solid #ccc !important;
+  }
+  .stat-card .stat-value { color: #1a1a1a !important; }
+  .stat-card .stat-label { color: #444 !important; }
+  .annotation {
+    background: #f5f5f5 !important;
+    border-left-color: #333 !important;
+    color: #000 !important;
+  }
+  .literature-context {
+    background: #faf5f0 !important;
+    border-left-color: #666 !important;
+    color: #000 !important;
+  }
+  .geo-card {
+    background: #f9f9f9 !important;
+    border: 1px solid #ccc !important;
+  }
+  .geo-card .geo-headline { color: #333 !important; }
+  .geo-card .geo-stat { color: #c00 !important; }
+  .geo-card .geo-stat-label,
+  .geo-source-ref,
+  .geo-fact-list { color: #444 !important; }
+  table.data-table th {
+    background: #eee !important;
+    color: #000 !important;
+    border-bottom: 2px solid #999 !important;
+  }
+  table.data-table td {
+    color: #000 !important;
+    border-bottom: 1px solid #ccc !important;
+  }
+  .thread-badge { border: 1px solid #999 !important; color: #000 !important; background: #eee !important; }
+  .provenance { color: #444 !important; border-top-color: #ccc !important; }
+  details { border-color: #ccc !important; background: #fff !important; }
+  details[open] { break-inside: avoid; }
+  details > summary { color: #000 !important; }
+  details:not([open]) { open: true; }
+  details > summary::marker, details > summary::-webkit-details-marker { color: #444 !important; }
+  [id^="chart-"] { width: 800px !important; max-width: 100%; }
+  .chart-container, .chart-container-sm { width: 800px !important; max-width: 100%; }
+  body::after {
+    content: "Generated: 2026-04-10 | Source: Tapestry (Lin, 2026) | Pipeline: hybrid_sustainability_scorer.py";
+    display: block;
+    text-align: center;
+    font-size: 9pt;
+    color: #666;
+    margin-top: 2rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #ccc;
+  }
 }
 details { border: 1px solid #30363d; border-radius: 6px; margin-bottom: 0.5rem; background: #1c2128; }
 details > summary { padding: 0.6rem 1rem; cursor: pointer; color: #e6edf3; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
@@ -239,17 +335,17 @@ details > .detail-body { padding: 0.8rem 1rem; }
 
       <div class="row g-3 mt-2">
         <div class="col-md-6">
-          <div class="card"><div class="card-header">Tier Distribution</div><div class="card-body"><div id="chart-tier" class="chart-container-sm"></div></div></div>
+          <div class="card"><div class="card-header">Tier Distribution</div><div class="card-body"><div id="chart-tier" class="chart-container-sm" aria-label="Tier distribution donut chart"></div></div></div>
         </div>
         <div class="col-md-6">
-          <div class="card"><div class="card-header">Organization Type Coverage</div><div class="card-body"><div id="chart-orgtype" class="chart-container-sm"></div></div></div>
+          <div class="card"><div class="card-header">Organization Type Coverage</div><div class="card-body"><div id="chart-orgtype" class="chart-container-sm" aria-label="Organization type coverage bar chart"></div></div></div>
         </div>
       </div>
     </div>
 
     <!-- TAB 2: Thread Analysis -->
     <div class="tab-pane" id="tab-threads">
-      <div class="card mt-2"><div class="card-header">Thread Comparison — 6 Research Threads</div><div class="card-body"><div id="chart-threads" class="chart-container"></div></div></div>
+      <div class="card mt-2"><div class="card-header">Thread Comparison — 6 Research Threads</div><div class="card-body"><div id="chart-threads" class="chart-container" aria-label="Thread comparison bar chart showing 6 research threads"></div></div></div>
 
       <div class="annotation">
         <strong>Policy</strong> is the most frequently addressed thread (205 statements mention it),
@@ -259,12 +355,12 @@ details > .detail-body { padding: 0.8rem 1rem; }
         the nuclear-AI nexus.
       </div>
 
-      <div class="card"><div class="card-header">Thread Co-occurrence (Tier A+B Statements)</div><div class="card-body"><div id="chart-cooccur" class="chart-container"></div></div></div>
+      <div class="card"><div class="card-header">Thread Co-occurrence (Tier A+B Statements)</div><div class="card-body"><div id="chart-cooccur" class="chart-container" aria-label="Thread co-occurrence heatmap for Tier A and B statements"></div></div></div>
     </div>
 
     <!-- TAB 3: Org × Thread Heatmap -->
     <div class="tab-pane" id="tab-heatmap">
-      <div class="card mt-2"><div class="card-header">Mean Thread Score by Organization Type</div><div class="card-body"><div id="chart-heatmap" class="chart-container" style="min-height:500px;"></div></div></div>
+      <div class="card mt-2"><div class="card-header">Mean Thread Score by Organization Type</div><div class="card-body"><div id="chart-heatmap" class="chart-container" style="min-height:500px;" aria-label="Mean thread score by organization type heatmap"></div></div></div>
 
       <div class="annotation">
         Civil society shows the strongest engagement across energy, climate, and policy threads.
@@ -278,7 +374,7 @@ details > .detail-body { padding: 0.8rem 1rem; }
     <div class="tab-pane" id="tab-top">
       <div class="card mt-2">
         <div class="card-header">Top-Scoring Statements</div>
-        <div class="card-body" style="max-height:600px;overflow-y:auto;">
+        <div class="card-body table-responsive-wrap" style="max-height:600px;overflow-y:auto;">
           <table class="data-table" id="table-top">
             <thead><tr><th>#</th><th>Key</th><th>Organization</th><th>Year</th><th>Score</th><th>Tier</th><th>Threads</th><th>GW Risk</th></tr></thead>
             <tbody></tbody>
@@ -289,7 +385,7 @@ details > .detail-body { padding: 0.8rem 1rem; }
 
     <!-- TAB 5: Timeline -->
     <div class="tab-pane" id="tab-timeline">
-      <div class="card mt-2"><div class="card-header">Sustainability Mentions Over Time</div><div class="card-body"><div id="chart-timeline" class="chart-container"></div></div></div>
+      <div class="card mt-2"><div class="card-header">Sustainability Mentions Over Time</div><div class="card-body"><div id="chart-timeline" class="chart-container" aria-label="Sustainability mentions over time bar and line chart"></div></div></div>
 
       <div class="annotation">
         Sustainability engagement accelerates sharply from 2023 onward, coinciding with the
@@ -300,10 +396,10 @@ details > .detail-body { padding: 0.8rem 1rem; }
 
     <!-- TAB 6: Greenwash Analysis -->
     <div class="tab-pane" id="tab-greenwash">
-      <div class="card mt-2"><div class="card-header">Greenwash Risk by Organization Type</div><div class="card-body"><div id="chart-greenwash" class="chart-container-sm"></div></div></div>
+      <div class="card mt-2"><div class="card-header">Greenwash Risk by Organization Type</div><div class="card-body"><div id="chart-greenwash" class="chart-container-sm" aria-label="Greenwash risk by organization type bar chart"></div></div></div>
 
       <div class="card"><div class="card-header">Highest Greenwash Risk Statements</div>
-        <div class="card-body" style="max-height:400px;overflow-y:auto;">
+        <div class="card-body table-responsive-wrap" style="max-height:400px;overflow-y:auto;">
           <table class="data-table" id="table-greenwash">
             <thead><tr><th>Key</th><th>Organization</th><th>Type</th><th>GW Risk</th><th>Actionability</th><th>Overall</th></tr></thead>
             <tbody></tbody>
@@ -320,7 +416,7 @@ details > .detail-body { padding: 0.8rem 1rem; }
       <div class="card mt-3"><div class="card-header">Framing Orientation by Organization Type</div>
       <div class="card-body">
       <div class="annotation">Statements classified as AI-as-problem (left, red), AI-as-solution (right, green), both (centered, blue), or neutral (excluded for clarity). Solution-framed statements show 2.3x higher greenwash risk than problem-framed.</div>
-      <div id="chart-framing-org" class="chart-container-sm"></div>
+      <div id="chart-framing-org" class="chart-container-sm" aria-label="Framing orientation by organization type diverging bar chart"></div>
       </div></div>
     </div>
 
@@ -333,7 +429,7 @@ details > .detail-body { padding: 0.8rem 1rem; }
         <a href="#extra-lit" class="badge bg-secondary text-decoration-none">Literature</a>
       </div>
 
-      <div class="card mt-2" id="extra-coverage"><div class="card-header">Underrepresented Dimensions Coverage</div><div class="card-body"><div id="chart-extra" class="chart-container-sm"></div></div></div>
+      <div class="card mt-2" id="extra-coverage"><div class="card-header">Underrepresented Dimensions Coverage</div><div class="card-body"><div id="chart-extra" class="chart-container-sm" aria-label="Underrepresented dimensions coverage bar chart"></div></div></div>
 
       <div class="annotation" id="critical-gap-annotation">
         <strong>Critical gap:</strong> <span id="critical-gap-text"></span>
@@ -349,7 +445,7 @@ details > .detail-body { padding: 0.8rem 1rem; }
             &lt;20% of their AI governance statements addressing sustainability — a stark governance-reality gap.
           </div>
           <div class="row g-3 mt-2" id="geo-region-cards"></div>
-          <div id="chart-geo-gap" class="chart-container-sm mt-3"></div>
+          <div id="chart-geo-gap" class="chart-container-sm mt-3" aria-label="Geographic governance coverage gap bar chart"></div>
         </div>
       </div>
 
@@ -391,6 +487,51 @@ details > .detail-body { padding: 0.8rem 1rem; }
             <li><strong>STMT-3016</strong> (ALBA-TCP 24th Summit Declaration): Source domain expired (Namecheap parking page). Permanently unscoreable &mdash; 14-character extract.</li>
             <li><strong>STMT-2663</strong> (UNEP AI Environmental Impact): Re-extracted via Playwright from wedocs.unep.org in Session 6. Re-scored: overall 90, Tier A. Calibration check: mean deviation 1.4 pts across 5 statements.</li>
           </ul>
+
+          <details class="mt-3" style="font-size:0.82rem;">
+            <summary style="color:var(--accent);cursor:pointer;font-weight:600;">Sensitivity Analysis</summary>
+            <div class="mt-2">
+
+              <h6 style="color:var(--accent)">Keyword Threshold Sensitivity</h6>
+              <p>The keyword pre-filter threshold determines how many statements enter the LLM scoring pool.
+              The baseline threshold is 10 (overall keyword score). Results at alternative thresholds:</p>
+              <table class="table table-sm table-dark" style="font-size:0.82rem;max-width:600px;">
+                <thead><tr><th>Threshold</th><th>Candidates</th><th>Delta</th><th>Tier A Lost</th><th>Tier B Lost</th></tr></thead>
+                <tbody>
+                  <tr><td>5</td><td>429</td><td>&minus;2</td><td>0</td><td>0</td></tr>
+                  <tr style="font-weight:bold;"><td>10 (baseline)</td><td>431</td><td>0</td><td>&mdash;</td><td>&mdash;</td></tr>
+                  <tr><td>15</td><td>405</td><td>&minus;26</td><td>1</td><td>2</td></tr>
+                </tbody>
+              </table>
+              <p style="color:#8b949e;">At threshold 15, one Tier A statement is lost: <strong>STMT-2663</strong> (UNEP, overall=90) which was manually added with no keyword match.
+              Two Tier B statements are also lost: STMT-2471 (IKEA, overall=30) and STMT-2525 (Ghana MoCDTI/GIZ, overall=28), both with keyword score=10.
+              The threshold 10 baseline is conservative &mdash; lowering to 5 adds only 2 more candidates (both already in the pool via manual rescue).</p>
+
+              <h6 style="color:var(--accent)" class="mt-3">Tier Boundary Fragility</h6>
+              <p>Percentage of scored statements (N=302) within &plusmn;5 points of each tier boundary:</p>
+              <table class="table table-sm table-dark" style="font-size:0.82rem;max-width:500px;">
+                <thead><tr><th>Boundary</th><th>Tiers</th><th>Within &plusmn;5pts</th><th>% Fragile</th></tr></thead>
+                <tbody>
+                  <tr><td>50</td><td>A / B</td><td>6</td><td>2.0%</td></tr>
+                  <tr><td>25</td><td>B / C</td><td>16</td><td>5.3%</td></tr>
+                  <tr><td>15</td><td>C / D</td><td>96</td><td>31.8%</td></tr>
+                  <tr><td>1</td><td>D / zero</td><td>51</td><td>16.9%</td></tr>
+                </tbody>
+              </table>
+              <p style="color:#8b949e;">The A/B boundary (50) is highly stable. The C/D boundary (15) is fragile &mdash;
+              31.8% of scored statements cluster near this cutoff. However, Tier C and D are both below the substantive-engagement
+              threshold, so boundary movement between them has minimal impact on key findings.</p>
+
+              <h6 style="color:var(--accent)" class="mt-3">Worst-Case False Negative Impact</h6>
+              <p>At the 95% CI upper bound FN rate (9.2%, vs. 2.7% observed), up to <strong>220</strong> additional
+              statements from the zero-scoring pool (N=2,389) could enter the scored pool. Proportional estimates suggest
+              up to 15 additional Tier A and 8 additional Tier B statements. However, FN-recovered statements tend to score
+              lower &mdash; the one confirmed FN rescue (STMT-2663, UNEP, overall=90) is exceptional. Realistically,
+              the Tier A count could range from 29 to ~35&ndash;40, but the distribution of themes and org types
+              would remain stable. Key findings (civil society dominance, energy-policy co-occurrence) are robust.</p>
+
+            </div>
+          </details>
 
           <div class="provenance">
             Generated: 2026-04-10 | Pipeline: hybrid_sustainability_scorer.py (Phase 1+2) → consolidate_llm_results.py → generate_dashboard.py<br>
@@ -445,7 +586,7 @@ document.getElementById('ov-mean').textContent = OVERVIEW.score_mean;
 const tierChart = echarts.init(document.getElementById('chart-tier'));
 const tierColors = { A: '#3fb950', B: '#58a6ff', C: '#f0883e', D: '#8b949e', zero: '#30363d' };
 tierChart.setOption({
-  toolbox: { feature: { saveAsImage: {} } },
+  toolbox: { feature: { saveAsImage: { pixelRatio: 3 } } },
   tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
   series: [{
     type: 'pie', radius: ['40%', '70%'],
@@ -460,7 +601,7 @@ tierChart.setOption({
 const orgChart = echarts.init(document.getElementById('chart-orgtype'));
 const orgEntries = Object.entries(OVERVIEW.org_type_distribution).sort((a,b) => b[1]-a[1]);
 orgChart.setOption({
-  toolbox: { feature: { saveAsImage: {} } },
+  toolbox: { feature: { saveAsImage: { pixelRatio: 3 } } },
   tooltip: { trigger: 'axis' },
   grid: { left: '30%', right: '5%', top: '5%', bottom: '5%' },
   xAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
@@ -476,7 +617,7 @@ orgChart.setOption({
 const threadChart = echarts.init(document.getElementById('chart-threads'));
 const threadEntries = Object.entries(THREAD_OVERVIEW);
 threadChart.setOption({
-  toolbox: { feature: { saveAsImage: {} } },
+  toolbox: { feature: { saveAsImage: { pixelRatio: 3 } } },
   tooltip: { trigger: 'axis' },
   legend: { data: ['Non-zero count', 'High (>=50)'], textStyle: { color: '#e6edf3' }, top: 0 },
   grid: { left: '15%', right: '5%', top: '12%', bottom: '10%' },
@@ -508,7 +649,7 @@ Object.entries(CO_OCCURRENCE).forEach(([key, val]) => {
   }
 });
 coChart.setOption({
-  toolbox: { feature: { saveAsImage: {} } },
+  toolbox: { feature: { saveAsImage: { pixelRatio: 3 } } },
   tooltip: { formatter: p => p.data ? coLabels[p.data[0]] + ' × ' + coLabels[p.data[1]] + ': ' + p.data[2] : '' },
   grid: { left: '18%', right: '12%', top: '5%', bottom: '15%' },
   xAxis: { type: 'category', data: coLabels, axisLabel: { color: '#e6edf3', rotate: 30 } },
@@ -524,7 +665,7 @@ coChart.setOption({
 // === Chart: Org × Thread Heatmap ===
 const hmChart = echarts.init(document.getElementById('chart-heatmap'));
 hmChart.setOption({
-  toolbox: { feature: { saveAsImage: {} } },
+  toolbox: { feature: { saveAsImage: { pixelRatio: 3 } } },
   tooltip: { formatter: p => p.data ? HEATMAP.x_labels[p.data[0]] + ' × ' + HEATMAP.y_labels[p.data[1]] + ': ' + p.data[2] : '' },
   grid: { left: '22%', right: '12%', top: '5%', bottom: '12%' },
   xAxis: { type: 'category', data: HEATMAP.x_labels, axisLabel: { color: '#e6edf3' } },
@@ -560,7 +701,7 @@ TOP_STATEMENTS.forEach((r, i) => {
 const tlChart = echarts.init(document.getElementById('chart-timeline'));
 const tlYears = Object.keys(YEAR_TIMELINE).map(Number).sort();
 tlChart.setOption({
-  toolbox: { feature: { saveAsImage: {} } },
+  toolbox: { feature: { saveAsImage: { pixelRatio: 3 } } },
   tooltip: { trigger: 'axis' },
   legend: { data: ['Count', 'Tier A'], textStyle: { color: '#e6edf3' }, top: 0 },
   grid: { left: '10%', right: '10%', top: '12%', bottom: '10%' },
@@ -588,7 +729,7 @@ tlChart.setOption({
 const gwChart = echarts.init(document.getElementById('chart-greenwash'));
 const gwEntries = Object.entries(GREENWASH.type_means).sort((a,b) => b[1]-a[1]);
 gwChart.setOption({
-  toolbox: { feature: { saveAsImage: {} } },
+  toolbox: { feature: { saveAsImage: { pixelRatio: 3 } } },
   tooltip: { trigger: 'axis' },
   grid: { left: '30%', right: '5%', top: '5%', bottom: '5%' },
   xAxis: { type: 'value', name: 'Mean GW Risk', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
@@ -620,7 +761,7 @@ GREENWASH.top_flagged.forEach(r => {
 const extraChart = echarts.init(document.getElementById('chart-extra'));
 const exEntries = Object.entries(EXTRA_DIMENSIONS);
 extraChart.setOption({
-  toolbox: { feature: { saveAsImage: {} } },
+  toolbox: { feature: { saveAsImage: { pixelRatio: 3 } } },
   tooltip: { trigger: 'axis' },
   grid: { left: '25%', right: '5%', top: '5%', bottom: '5%' },
   xAxis: { type: 'value', axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
@@ -806,7 +947,7 @@ if (typeof GEOGRAPHIC_COVERAGE !== 'undefined') {
   });
 
   geoGapChart.setOption({
-    toolbox: { feature: { saveAsImage: {} } },
+    toolbox: { feature: { saveAsImage: { pixelRatio: 3 } } },
     tooltip: {
       trigger: 'axis',
       formatter: function(params) {
@@ -865,7 +1006,7 @@ if (typeof FRAMING_ANALYSIS !== 'undefined' && FRAMING_ANALYSIS.by_org_type) {
       return totalA - totalB;
     });
     framingChart.setOption({
-      toolbox: { feature: { saveAsImage: {} } },
+      toolbox: { feature: { saveAsImage: { pixelRatio: 3 } } },
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
@@ -961,6 +1102,27 @@ window.addEventListener('resize', () => {
 
 // Activate hash on load
 activateHash();
+
+// Print preparation: open all <details> and show all tabs
+window.addEventListener('beforeprint', function() {
+  document.querySelectorAll('details:not([open])').forEach(function(d) {
+    d.setAttribute('open', '');
+    d.setAttribute('data-was-closed', '');
+  });
+  // Force all tab panes visible (CSS handles this, but ensure charts resize)
+  setTimeout(function() {
+    document.querySelectorAll('[id^="chart-"]').forEach(function(el) {
+      var inst = echarts.getInstanceByDom(el);
+      if (inst) inst.resize();
+    });
+  }, 100);
+});
+window.addEventListener('afterprint', function() {
+  document.querySelectorAll('details[data-was-closed]').forEach(function(d) {
+    d.removeAttribute('open');
+    d.removeAttribute('data-was-closed');
+  });
+});
 </script>
 
 </body>
